@@ -1,8 +1,10 @@
 package com.eniessi.radiantboard.core.network
 
+import com.eniessi.radiantboard.core.domain.MatchSummary
 import com.eniessi.radiantboard.core.domain.PlayerProfile
 import com.eniessi.radiantboard.core.domain.ValorantRepository
 import com.eniessi.radiantboard.core.network.dto.AccountDto
+import com.eniessi.radiantboard.core.network.dto.MatchesResponse
 import com.eniessi.radiantboard.core.network.dto.toDomain
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -27,6 +29,34 @@ class ValorantRepositoryImpl(
             if (response.status.isSuccess()) {
                 val accountResponse = response.body<AccountResponse>()
                 Result.success(accountResponse.data.toDomain())
+            } else {
+                Result.failure(
+                    Exception("HTTP ${response.status.value}: ${response.status.description}")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMatchHistory(region: String, puuid: String): Result<List<MatchSummary>> {
+        return try {
+            val response = httpClient.get {
+                url("https://api.henrikdev.xyz/valorant/v3/by-puuid/matches/$region/$puuid")
+            }
+
+            if (response.status.isSuccess()) {
+                val matchesResponse = response.body<MatchesResponse>()
+                val summaries = matchesResponse.data.map { match ->
+                    MatchSummary(
+                        matchId = match.metadata.matchId,
+                        mapName = match.metadata.map,
+                        isWin = false,
+                        totalKills = match.kills.size,
+                        kills = match.kills.map { it.toDomain() }
+                    )
+                }
+                Result.success(summaries)
             } else {
                 Result.failure(
                     Exception("HTTP ${response.status.value}: ${response.status.description}")
