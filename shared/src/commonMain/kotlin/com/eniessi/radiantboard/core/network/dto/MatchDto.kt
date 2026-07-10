@@ -29,8 +29,8 @@ data class MatchMetadataDto(
 
 @Serializable
 data class KillDto(
-    @SerialName("time_since_round_start_millis")
-    val timeSinceRoundStartMillis: Int = 0,
+    @SerialName("kill_time_in_match")
+    val killTimeInMatch: Int = 0,
     @SerialName("killer_puuid")
     val killerPuuid: String = "",
     @SerialName("victim_puuid")
@@ -48,7 +48,7 @@ data class LocationDto(
 )
 
 fun KillDto.toDomain() = Kill(
-    timeMillis = timeSinceRoundStartMillis,
+    timeMillis = killTimeInMatch,
     killerPuuid = killerPuuid,
     victimPuuid = victimPuuid,
     position = KillPosition(victimDeathLocation.x, victimDeathLocation.y)
