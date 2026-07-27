@@ -1,5 +1,6 @@
 package com.eniessi.radiantboard.core.network
 
+import com.eniessi.radiantboard.core.domain.MatchPlayerInfo
 import com.eniessi.radiantboard.core.domain.MatchSummary
 import com.eniessi.radiantboard.core.domain.PlayerProfile
 import com.eniessi.radiantboard.core.domain.ValorantRepository
@@ -48,12 +49,23 @@ class ValorantRepositoryImpl(
             if (response.status.isSuccess()) {
                 val matchesResponse = response.body<MatchesResponse>()
                 val summaries = matchesResponse.data.map { match ->
+                    val mapOfPlayers = match.players.allPlayers.associate { player ->
+                        player.puuid to MatchPlayerInfo(
+                            puuid = player.puuid,
+                            agentName = player.character,
+                            agentIconUrl = player.assets.agent.small,
+                            team = player.team
+                        )
+                    }
+                    val myTeam = match.players.allPlayers.find { it.puuid == puuid }?.team ?: ""
                     MatchSummary(
                         matchId = match.metadata.matchId,
                         mapName = match.metadata.map,
                         isWin = false,
                         totalKills = match.kills.size,
-                        kills = match.kills.map { it.toDomain() }
+                        kills = match.kills.map { it.toDomain() },
+                        playersMap = mapOfPlayers,
+                        userTeam = myTeam
                     )
                 }
                 Result.success(summaries)

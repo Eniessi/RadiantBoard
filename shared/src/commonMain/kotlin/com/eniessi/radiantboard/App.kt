@@ -6,6 +6,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -14,8 +15,9 @@ import com.eniessi.radiantboard.core.di.domainModule
 import com.eniessi.radiantboard.core.di.networkModule
 import com.eniessi.radiantboard.core.di.presentationModule
 import com.eniessi.radiantboard.core.di.repositoryModule
-import com.eniessi.radiantboard.core.presentation.MatchViewModel
+import com.eniessi.radiantboard.core.network.SessionRepositoryImpl
 import com.eniessi.radiantboard.core.presentation.MatchUiState
+import com.eniessi.radiantboard.core.presentation.MatchViewModel
 import com.eniessi.radiantboard.ui.TacticalBoardScreen
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
@@ -29,7 +31,14 @@ fun App() {
     ) {
         MaterialTheme {
             val viewModel = koinInject<MatchViewModel>()
+            val sessionRepo = koinInject<SessionRepositoryImpl>()
             val state by viewModel.uiState.collectAsState()
+            val tacticalState by viewModel.tacticalState.collectAsState()
+
+            LaunchedEffect(Unit) {
+                sessionRepo.configure("GGiraldi", "2222")
+                viewModel.loadLatestMatch()
+            }
 
             when (state) {
                 is MatchUiState.Idle -> {
@@ -51,7 +60,13 @@ fun App() {
                     }
                 }
                 is MatchUiState.Success -> {
-                    TacticalBoardScreen((state as MatchUiState.Success).analysis)
+                    tacticalState?.let { tactical ->
+                        TacticalBoardScreen(
+                            state = tactical,
+                            onRoundSelected = viewModel::onRoundSelected,
+                            onTimeChanged = viewModel::onTimeChanged
+                        )
+                    }
                 }
             }
         }

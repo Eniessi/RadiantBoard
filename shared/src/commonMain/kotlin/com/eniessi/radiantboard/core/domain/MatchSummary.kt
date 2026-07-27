@@ -5,5 +5,7 @@ data class MatchSummary(
     val mapName: String,
     val isWin: Boolean,
     val totalKills: Int = 0,
-    val kills: List<Kill> = emptyList()
+    val kills: List<Kill> = emptyList(),
+    val playersMap: Map<String, MatchPlayerInfo> = emptyMap(),
+    val userTeam: String = ""
 )
